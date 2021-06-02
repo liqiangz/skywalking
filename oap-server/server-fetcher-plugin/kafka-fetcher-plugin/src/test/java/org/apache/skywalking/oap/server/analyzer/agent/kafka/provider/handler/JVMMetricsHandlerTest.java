@@ -46,6 +46,9 @@ import org.apache.skywalking.oap.server.analyzer.agent.kafka.module.KafkaFetcher
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.mock.MockModuleManager;
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.mock.MockModuleProvider;
 import org.apache.skywalking.oap.server.library.module.ModuleStartException;
+import org.apache.skywalking.oap.server.telemetry.TelemetryModule;
+import org.apache.skywalking.oap.server.telemetry.api.MetricsCreator;
+import org.apache.skywalking.oap.server.telemetry.none.MetricsCreatorNoop;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -85,6 +88,12 @@ public class JVMMetricsHandlerTest {
                         registerServiceImplementation(NamingControl.class, new NamingControl(
                             512, 512, 512, new EndpointNameGrouping()));
                         registerServiceImplementation(SourceReceiver.class, SOURCE_RECEIVER);
+                    }
+                });
+                register(TelemetryModule.NAME, () -> new MockModuleProvider() {
+                    @Override
+                    protected void register() {
+                        registerServiceImplementation(MetricsCreator.class, new MetricsCreatorNoop());
                     }
                 });
             }

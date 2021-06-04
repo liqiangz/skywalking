@@ -19,6 +19,8 @@
 package org.apache.skywalking.oap.server.analyzer.agent.kafka.provider.handler;
 
 import com.google.common.collect.Lists;
+
+import java.util.Collections;
 import java.util.List;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.utils.Bytes;
@@ -28,6 +30,8 @@ import org.apache.skywalking.apm.network.language.agent.v3.JVMMetric;
 import org.apache.skywalking.apm.network.language.agent.v3.JVMMetricCollection;
 import org.apache.skywalking.apm.network.language.agent.v3.Memory;
 import org.apache.skywalking.apm.network.language.agent.v3.MemoryPool;
+import org.apache.skywalking.oap.meter.analyzer.prometheus.rule.Rule;
+import org.apache.skywalking.oap.meter.analyzer.prometheus.rule.Rules;
 import org.apache.skywalking.oap.server.core.CoreModule;
 import org.apache.skywalking.oap.server.core.config.NamingControl;
 import org.apache.skywalking.oap.server.core.config.group.EndpointNameGrouping;
@@ -41,6 +45,7 @@ import org.apache.skywalking.oap.server.library.module.ModuleManager;
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.module.KafkaFetcherConfig;
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.mock.MockModuleManager;
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.mock.MockModuleProvider;
+import org.apache.skywalking.oap.server.library.module.ModuleStartException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -70,7 +75,7 @@ public class JVMMetricsHandlerTest {
     };
 
     @Before
-    public void setup() {
+    public void setup() throws ModuleStartException {
         manager = new MockModuleManager() {
             @Override
             protected void init() {
@@ -84,7 +89,8 @@ public class JVMMetricsHandlerTest {
                 });
             }
         };
-        handler = new JVMMetricsHandler(manager, config);
+        List<Rule> rules = Rules.loadRules("jvm-metrics-rules", Collections.singletonList("jvm"));
+        handler = new JVMMetricsHandler(manager, config, rules);
     }
 
     @Test

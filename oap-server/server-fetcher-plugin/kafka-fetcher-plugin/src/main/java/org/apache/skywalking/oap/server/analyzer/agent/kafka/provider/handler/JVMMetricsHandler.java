@@ -22,11 +22,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.skywalking.apm.network.language.agent.v3.JVMMetricCollection;
+import org.apache.skywalking.oap.meter.analyzer.prometheus.rule.Rule;
 import org.apache.skywalking.oap.server.analyzer.agent.kafka.module.KafkaFetcherConfig;
 import org.apache.skywalking.oap.server.analyzer.provider.jvm.JVMSourceDispatcher;
 import org.apache.skywalking.oap.server.core.CoreModule;
 import org.apache.skywalking.oap.server.core.config.NamingControl;
 import org.apache.skywalking.oap.server.library.module.ModuleManager;
+
+import java.util.List;
 
 /**
  * A handler deserializes the message of JVM Metrics and pushes it to downstream.
@@ -37,9 +40,9 @@ public class JVMMetricsHandler extends AbstractKafkaHandler {
     private final NamingControl namingLengthControl;
     private final JVMSourceDispatcher jvmSourceDispatcher;
 
-    public JVMMetricsHandler(ModuleManager moduleManager, KafkaFetcherConfig config) {
+    public JVMMetricsHandler(ModuleManager moduleManager, KafkaFetcherConfig config, List<Rule> rules) {
         super(moduleManager, config);
-        this.jvmSourceDispatcher = new JVMSourceDispatcher(moduleManager);
+        this.jvmSourceDispatcher = new JVMSourceDispatcher(moduleManager, rules);
         this.namingLengthControl = moduleManager.find(CoreModule.NAME)
                                                 .provider()
                                                 .getService(NamingControl.class);
@@ -61,9 +64,7 @@ public class JVMMetricsHandler extends AbstractKafkaHandler {
             builder.setService(namingLengthControl.formatServiceName(builder.getService()));
             builder.setServiceInstance(namingLengthControl.formatInstanceName(builder.getServiceInstance()));
 
-            builder.getMetricsList().forEach(jvmMetric -> {
-                jvmSourceDispatcher.sendMetric(builder.getService(), builder.getServiceInstance(), jvmMetric);
-            });
+            jvmSourceDispatcher.sendMetric(builder.getService(), builder.getServiceInstance(), builder.getMetricsList());
         } catch (Exception e) {
             log.error("handle record failed", e);
         }

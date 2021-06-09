@@ -57,7 +57,10 @@ public class JVMMetricReportServiceHandler extends JVMMetricReportServiceGrpc.JV
         final JVMMetricCollection.Builder builder = request.toBuilder();
         builder.setService(namingControl.formatServiceName(builder.getService()));
         builder.setServiceInstance(namingControl.formatInstanceName(builder.getServiceInstance()));
-        this.jvmSourceDispatcher.sendMetric(builder.getService(), builder.getServiceInstance(), builder.getMetricsList());
+
+        builder.getMetricsList().forEach(jvmMetric -> {
+            jvmSourceDispatcher.sendMetric(builder.getService(), builder.getServiceInstance(), jvmMetric);
+        });
 
         responseObserver.onNext(Commands.newBuilder().build());
         responseObserver.onCompleted();

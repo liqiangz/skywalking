@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
@@ -52,22 +53,13 @@ public class JVMSourceDispatcher {
                 .collect(Collectors.toList());
     }
 
-    public void sendMetric(String service, String serviceInstance, Collection<JVMMetric> metrics) {
-        List<Sample> cpuSamples = new ArrayList<>();
-        List<Sample> memorySamples = new ArrayList<>();
-        List<Sample> memoryPoolSamples = new ArrayList<>();
-        List<Sample> gcCountSamples = new ArrayList<>();
-        List<Sample> gcTimeSamples = new ArrayList<>();
-        List<Sample> threadSamples = new ArrayList<>();
-
-        metrics.forEach(jvmMetric -> {
-            cpuSamples.add(parseCpuData(service, serviceInstance, jvmMetric));
-            memorySamples.addAll(parseMemoryData(service, serviceInstance, jvmMetric));
-            memoryPoolSamples.addAll(parseMemoryPollData(service, serviceInstance, jvmMetric));
-            gcCountSamples.addAll(parseGcCountData(service, serviceInstance, jvmMetric));
-            gcTimeSamples.addAll(parseGcTimeData(service, serviceInstance, jvmMetric));
-            threadSamples.addAll(parseThreadData(service, serviceInstance, jvmMetric));
-        });
+    public void sendMetric(String service, String serviceInstance, JVMMetric jvmMetric) {
+        List<Sample> cpuSamples = Collections.singletonList(parseCpuData(service, serviceInstance, jvmMetric));
+        List<Sample> memorySamples = new ArrayList<>(parseMemoryData(service, serviceInstance, jvmMetric));
+        List<Sample> memoryPoolSamples = new ArrayList<>(parseMemoryPollData(service, serviceInstance, jvmMetric));
+        List<Sample> gcCountSamples = new ArrayList<>(parseGcCountData(service, serviceInstance, jvmMetric));
+        List<Sample> gcTimeSamples = new ArrayList<>(parseGcTimeData(service, serviceInstance, jvmMetric));
+        List<Sample> threadSamples = new ArrayList<>(parseThreadData(service, serviceInstance, jvmMetric));
 
         ImmutableMap<String, SampleFamily> sampleFamilies = ImmutableMap.<String, SampleFamily>builder()
                 .put("jvm_gc_time", SampleFamilyBuilder.newBuilder(gcTimeSamples.toArray(new Sample[0])).build())
